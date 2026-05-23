@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "gogu.samsung@gmail.com",
+                "Name": "YO Ham"
+            }
+        ],
+        "Category": "Online Services",
+        "Description": "HF propagation data from hamqsl.com — SFI, A/K-index, band conditions",
+        "Icon": "network-wireless",
+        "Id": "org.kde.plasma.hamqsl-propagation",
+        "License": "GPL-2.0-or-later",
+        "Name": "HF Propagation",
+        "Version": "1.0"
+    },
+    "KPackageStructure": "Plasma/Applet"
+}
