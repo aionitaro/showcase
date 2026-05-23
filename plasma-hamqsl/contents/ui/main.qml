@@ -1,26 +1,25 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
-import org.kde.plasma.plasmoid 2.0
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.plasmoid
 
-Item {
+PlasmoidItem {
     id: root
 
-    // Prefer full representation always (desktop widget)
-    Plasmoid.preferredRepresentation: Plasmoid.fullRepresentation
+    preferredRepresentation: fullRepresentation
 
-    // ── Data properties ──────────────────────────────────────────────────────
-    property string sfi:       "—"
-    property string aIndex:    "—"
-    property string kIndex:    "—"
-    property string sunspots:  "—"
-    property string xray:      "—"
-    property string geomag:    "—"
-    property var    bands:     ({})
-    property string updated:   ""
-    property bool   loading:   true
-    property bool   hasError:  false
+    // ── Date ──────────────────────────────────────────────────────────────────
+    property string sfi:      "—"
+    property string aIndex:   "—"
+    property string kIndex:   "—"
+    property string sunspots: "—"
+    property string xray:     "—"
+    property string geomag:   "—"
+    property var    bands:    ({})
+    property string updated:  ""
+    property bool   loading:  true
+    property bool   hasError: false
 
-    // ── XML helpers ───────────────────────────────────────────────────────────
+    // ── Parsare XML ───────────────────────────────────────────────────────────
     function tagValue(xml, tag) {
         var open  = "<" + tag + ">"
         var close = "</" + tag + ">"
@@ -28,18 +27,17 @@ Item {
         if (s === -1) return "—"
         s += open.length
         var e = xml.indexOf(close, s)
-        if (e === -1) return "—"
-        return xml.substring(s, e).trim()
+        return (e === -1) ? "—" : xml.substring(s, e).trim()
     }
 
     function parseBands(xml) {
         var result = {}
         var pos = 0
         while (pos < xml.length) {
-            var start = xml.indexOf("<band ", pos)
+            var start  = xml.indexOf("<band ", pos)
             if (start === -1) break
-            var tagEnd  = xml.indexOf(">", start)
-            var valEnd  = xml.indexOf("</band>", tagEnd)
+            var tagEnd = xml.indexOf(">", start)
+            var valEnd = xml.indexOf("</band>", tagEnd)
             if (tagEnd === -1 || valEnd === -1) break
             var tag   = xml.substring(start, tagEnd + 1)
             var value = xml.substring(tagEnd + 1, valEnd).trim()
@@ -51,7 +49,7 @@ Item {
         return result
     }
 
-    // ── Fetch ─────────────────────────────────────────────────────────────────
+    // ── Fetch date ────────────────────────────────────────────────────────────
     function fetch() {
         root.loading = true
         var xhr = new XMLHttpRequest()
@@ -80,49 +78,43 @@ Item {
     Timer { interval: 600000; running: true; repeat: true; onTriggered: root.fetch() }
     Component.onCompleted: root.fetch()
 
-    // ── Colour helpers ────────────────────────────────────────────────────────
+    // ── Culori ───────────────────────────────────────────────────────────────
     function condColor(c) {
         if (c === "Good") return "#4CAF50"
         if (c === "Fair") return "#FF9800"
         if (c === "Poor") return "#F44336"
         return "#555555"
     }
-
     function kColor(k) {
         var v = parseInt(k, 10)
-        if (isNaN(v))   return "#888888"
-        if (v <= 2)     return "#4CAF50"
-        if (v <= 4)     return "#FF9800"
+        if (isNaN(v)) return "#888888"
+        if (v <= 2)   return "#4CAF50"
+        if (v <= 4)   return "#FF9800"
         return "#F44336"
     }
-
     function aColor(a) {
         var v = parseInt(a, 10)
-        if (isNaN(v))   return "#888888"
-        if (v <= 7)     return "#4CAF50"
-        if (v <= 15)    return "#FF9800"
+        if (isNaN(v)) return "#888888"
+        if (v <= 7)   return "#4CAF50"
+        if (v <= 15)  return "#FF9800"
         return "#F44336"
     }
 
-    // ── Full representation ───────────────────────────────────────────────────
-    Plasmoid.fullRepresentation: Rectangle {
-        id: card
+    // ── UI ────────────────────────────────────────────────────────────────────
+    fullRepresentation: Rectangle {
         width:  280
         radius: 10
         color:  Qt.rgba(0.06, 0.06, 0.10, 0.88)
         implicitHeight: col.implicitHeight + 24
-
-        // subtle border
         border.color: Qt.rgba(1, 1, 1, 0.10)
         border.width: 1
 
         ColumnLayout {
             id: col
-            anchors { left: parent.left; right: parent.right; top: parent.top }
-            anchors.margins: 14
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 14 }
             spacing: 10
 
-            // ── Header ───────────────────────────────────────────────────────
+            // Header
             RowLayout {
                 Layout.fillWidth: true
                 Text {
@@ -138,36 +130,33 @@ Item {
                 }
             }
 
-            // ── Divider ───────────────────────────────────────────────────────
             Rectangle { Layout.fillWidth: true; height: 1; color: Qt.rgba(1,1,1,0.15) }
 
-            // ── Solar indices — row ───────────────────────────────────────────
+            // Indici solari
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 0
 
                 Repeater {
                     model: [
-                        { label: "SFI",    value: root.sfi,      color: "#90CAF9" },
-                        { label: "A-Idx",  value: root.aIndex,   color: root.aColor(root.aIndex)  },
-                        { label: "K-Idx",  value: root.kIndex,   color: root.kColor(root.kIndex)  },
-                        { label: "Spots",  value: root.sunspots, color: "#CE93D8" },
-                        { label: "X-Ray",  value: root.xray,     color: "#FFCC80" }
+                        { label: "SFI",   value: root.sfi,      color: "#90CAF9"                  },
+                        { label: "A-Idx", value: root.aIndex,   color: root.aColor(root.aIndex)   },
+                        { label: "K-Idx", value: root.kIndex,   color: root.kColor(root.kIndex)   },
+                        { label: "Spots", value: root.sunspots, color: "#CE93D8"                  },
+                        { label: "X-Ray", value: root.xray,     color: "#FFCC80"                  }
                     ]
 
                     delegate: ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 2
-
                         Text {
                             Layout.alignment: Qt.AlignHCenter
-                            text:  modelData.label
-                            color: "#888888"
-                            font.pixelSize: 9
+                            text: modelData.label
+                            color: "#888888"; font.pixelSize: 9
                         }
                         Text {
                             Layout.alignment: Qt.AlignHCenter
-                            text:  modelData.value
+                            text: modelData.value
                             color: modelData.color
                             font { pixelSize: 16; bold: true }
                         }
@@ -175,14 +164,13 @@ Item {
                 }
             }
 
-            // ── Divider ───────────────────────────────────────────────────────
             Rectangle { Layout.fillWidth: true; height: 1; color: Qt.rgba(1,1,1,0.15) }
 
-            // ── Band conditions ───────────────────────────────────────────────
+            // Header benzi
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 0
-                Text { text: "";   Layout.preferredWidth: 72; font.pixelSize: 10; color: "#888888" }
+                Item { Layout.preferredWidth: 72 }
                 Text {
                     text: "☀  Zi"
                     color: "#FFD54F"; font.pixelSize: 10
@@ -195,6 +183,7 @@ Item {
                 }
             }
 
+            // Rânduri benzi
             Repeater {
                 model: ["80m-40m", "30m-20m", "17m-15m", "10m-12m"]
 
@@ -211,11 +200,9 @@ Item {
                         Layout.preferredWidth: 68
                     }
 
-                    // Day pill
                     Rectangle {
                         Layout.fillWidth: true; height: 20; radius: 4
-                        color: root.condColor(dayVal)
-                        opacity: 0.85
+                        color: root.condColor(dayVal); opacity: 0.85
                         Text {
                             anchors.centerIn: parent
                             text: dayVal; color: "white"
@@ -223,11 +210,9 @@ Item {
                         }
                     }
 
-                    // Night pill
                     Rectangle {
                         Layout.fillWidth: true; height: 20; radius: 4
-                        color: root.condColor(nightVal)
-                        opacity: 0.85
+                        color: root.condColor(nightVal); opacity: 0.85
                         Text {
                             anchors.centerIn: parent
                             text: nightVal; color: "white"
@@ -237,9 +222,9 @@ Item {
                 }
             }
 
-            // ── Geomag field ──────────────────────────────────────────────────
             Rectangle { Layout.fillWidth: true; height: 1; color: Qt.rgba(1,1,1,0.15) }
 
+            // Câmp geomagnetic
             RowLayout {
                 Layout.fillWidth: true
                 Text { text: "Câmp geomagnetic:"; color: "#888888"; font.pixelSize: 10 }
@@ -247,14 +232,13 @@ Item {
                 Text { text: root.geomag; color: "#ffffff"; font { pixelSize: 10; bold: true } }
             }
 
-            // ── Source + refresh button ───────────────────────────────────────
+            // Sursă + buton refresh
             RowLayout {
                 Layout.fillWidth: true
                 Text { text: "hamqsl.com"; color: "#444444"; font.pixelSize: 9 }
                 Item { Layout.fillWidth: true }
                 Text {
-                    text: "↺"
-                    color: "#666666"; font.pixelSize: 14
+                    text: "↺"; color: "#666666"; font.pixelSize: 14
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
@@ -263,7 +247,7 @@ Item {
                 }
             }
 
-            Item { height: 2 }   // bottom padding inside col
+            Item { height: 2 }
         }
     }
 }
