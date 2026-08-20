@@ -48,6 +48,20 @@ Instanța n8n a utilizatorului stochează datele binare în modul **filesystem-v
 - Singura cale de a obține efectiv fișierul e prin răspunsul HTTP al webhook-ului (`Respond to Webhook` cu `respondWith: binary`), care citește corect din filesystem-v2 la runtime.
 - Din Cowork (sandbox cloud), acest apel HTTP eșuează la nivel de proxy (403, domeniu nepermis pe lista albă) — motiv pentru care această arhitectură cu webhook + curl e gândită specific pentru Claude Code local/pe infrastructură proprie, unde acest blocaj nu există.
 
+## Test end-to-end reușit (2026-08-20, dintr-o sesiune Claude Code pe web)
+
+La verificarea de mai sus, workflow-ul live din n8n nu corespundea de fapt cu schema documentată mai sus — divergențe descoperite la testare:
+
+- Nodul Webhook nu avea `httpMethod` setat explicit (rămăsese pe default GET, nu POST) și nu avea `authentication: headerAuth` configurat deloc — webhook-ul era complet neautenticat, deschis oricui știa URL-ul.
+- Nodul Gmail era pe `operation: getAll` cu un filtru fix `subject:(Salt Business)` și `limit: 1`, ignorând complet `messageId`-ul primit în body — lua mereu cel mai recent email cu acel subiect, nu pe cel cerut.
+- `options.downloadAttachments` nu era activat.
+
+Corectat prin `update_workflow` (MCP n8n) ca să corespundă exact schemei din secțiunea „Noduri" de mai sus: `httpMethod: POST`, `authentication: headerAuth` legat de credențialul Header Auth existent, `operation: get` cu `messageId` din body, `downloadAttachments: true`.
+
+După corecție, testat live: căutare Gmail pentru emailul Salt Bank „Iulie 2026" → `messageId` real → apel webhook → `HTTP 200`, 142.300 bytes, arhivă ZIP validă cu 6 fișiere (3 extrase RON/EUR/USD, fiecare PDF+CSV). Workflow-ul a fost dezactivat (`unpublish`) imediat după test.
+
+Important: testul a rulat dintr-o sesiune **Claude Code pe web** (nu Cowork), unde apelurile HTTP către `n8n.onlineleads.ro` au reușit fără blocaj de proxy — inclusiv apelul de `POST` cu payload și descărcare de răspuns binar de ~140 KB. Asta contrazice presupunerea inițială (bazată pe testarea în Cowork) că orice mediu cloud/browser e blocat — pare specific Cowork, nu tuturor sesiunilor non-locale. Totuși, accesul de rețea al sesiunilor cloud poate varia (s-a observat și un 403 tranzitoriu la un test anterior, simplu, către homepage, urmat de succes constant la reîncercări) — nu trata asta ca o garanție permanentă, mai ales pentru automatizări recurente fără supraveghere.
+
 ## Securitate
 
 Webhook-ul, odată activ (publicat), e accesibil public pe internet la `https://n8n.onlineleads.ro/webhook/gmail-attachment`, protejat doar de header-ul `X-API-KEY`. Recomandări:
