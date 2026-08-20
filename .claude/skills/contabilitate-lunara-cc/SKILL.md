@@ -96,10 +96,14 @@ Marchează explicit „verifică manual" orice rând ambiguu (nume trunchiat, fo
 
 Lista de plăți de la Pasul 4 nu e livrabilul final pentru `Primite/` — e punctul de plecare pentru a aduna facturile de la furnizori care corespund plăților identificate.
 
-1. Pe baza tabelului de plăți afișat în chat, cere utilizatorului să încarce (upload direct în conversație) facturile primite corespunzătoare fiecărei plăți către un furnizor extern (nu e nevoie pentru transferuri interne sau taxe/bugetul de stat, care nu au factură de furnizor).
-2. Pe măsură ce utilizatorul trimite facturile, pune-le în `NN - NumeLună/Primite/`, cu nume curate (furnizor + număr document + dată, dacă sunt lizibile din fișier).
-3. Reconciliază: pentru fiecare plată din tabel, marchează dacă are acum o factură primită asociată (sumă + furnizor plauzibil identice). Actualizează fișierul `Plati NN - NumeLună.xlsx` cu o coloană/observație „Factura primita: da/nu" — sau raportează separat, în chat, orice plată încă neacoperită de o factură.
-4. Nu bloca restul pachetului dacă utilizatorul nu are toate facturile primite la îndemână — semnalează explicit ce lipsește în verificarea finală, nu presupune că lipsa înseamnă „nu există".
+Utilizatorul poate trimite facturile de la furnizori oricând în cursul lunii, nu doar când rulează acest skill — le redirecționează (forward) pe email către propria adresă, cu subiectul rescris ca `[FACTURA] AAAA-LL-ZZ Nume scurt furnizor` (data facturii, nu data emailului) și label-ul Gmail „Facturi Netriate" aplicat. Workflow-ul n8n recurent `Facturi Primite - Staging Sync` (activ permanent, vezi `references/n8n-workflow-facturi-staging.md`) le preia automat zilnic și le pune în folderul tampon OneDrive `Online Leads/Documente Societate/Facturi/_Facturi Primite (netriate)/`.
+
+1. **Verifică întâi folderul tampon**, înainte să întrebi utilizatorul de ceva: listează conținutul lui (`folder/getChildren` pe OneDrive, id-ul e în referința de mai sus). Fiecare fișier are numele `AAAA-LL-ZZ_Nume-Curatat.pdf`.
+2. Pentru fiecare plată din tabelul de la Pasul 4 care ar trebui să aibă o factură de furnizor (exclude transferuri interne și taxe/buget de stat), caută în folderul tampon un fișier a cărui dată e plauzibil apropiată de data plății (de regulă factura precede plata cu până la ~30 de zile) și al cărui nume conține (aproximativ) numele furnizorului.
+3. Pentru fiecare potrivire găsită: confirmă-o pe scurt în chat (sumă + furnizor plauzibile), apoi **mută** fișierul (nu copiază) din folderul tampon în `NN - NumeLună/Primite/` — folosește operația `file/move` (nu `folder/move`) pe OneDrive, ca folderul tampon să rămână curat, cu doar facturile încă neconfirmate.
+4. **Abia pentru plățile rămase neacoperite** după verificarea tamponului, cere utilizatorului să trimită factura corespunzătoare (fie prin forward+label ca mai sus, pentru viitor, fie upload direct în chat pentru rezolvare imediată).
+5. Actualizează fișierul `Plati NN - NumeLună.xlsx` cu o coloană/observație „Factura primita: da/nu" — sau raportează separat, în chat, orice plată încă neacoperită de o factură.
+6. Nu bloca restul pachetului dacă utilizatorul nu are toate facturile primite la îndemână — semnalează explicit ce lipsește în verificarea finală, nu presupune că lipsa înseamnă „nu există".
 
 ## Pas 5 — Upload pe OneDrive, prin n8n
 
