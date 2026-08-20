@@ -90,14 +90,27 @@ Pentru fiecare plată, notează: furnizor/beneficiar, sumă, valută. Construie�
 
 Marchează explicit „verifică manual" orice rând ambiguu (nume trunchiat, format regional neclar de sumă) — nu inventa o valoare când textul sursă e neclar.
 
+**Output dublu, obligatoriu:** fișierul XLSX e doar un pas intermediar, nu livrabilul final al acestui pas — tot conținutul listei de plăți (fiecare rând: dată, furnizor/beneficiar, sumă, valută) trebuie afișat **și direct în chat**, ca tabel, nu doar salvat în fișier. Utilizatorul are nevoie de listă vizibilă imediat ca să poată identifica și strânge facturile primite corespunzătoare, la Pasul 4.5.
+
+## Pas 4.5 — Reconciliere cu facturile primite
+
+Lista de plăți de la Pasul 4 nu e livrabilul final pentru `Primite/` — e punctul de plecare pentru a aduna facturile de la furnizori care corespund plăților identificate.
+
+1. Pe baza tabelului de plăți afișat în chat, cere utilizatorului să încarce (upload direct în conversație) facturile primite corespunzătoare fiecărei plăți către un furnizor extern (nu e nevoie pentru transferuri interne sau taxe/bugetul de stat, care nu au factură de furnizor).
+2. Pe măsură ce utilizatorul trimite facturile, pune-le în `NN - NumeLună/Primite/`, cu nume curate (furnizor + număr document + dată, dacă sunt lizibile din fișier).
+3. Reconciliază: pentru fiecare plată din tabel, marchează dacă are acum o factură primită asociată (sumă + furnizor plauzibil identice). Actualizează fișierul `Plati NN - NumeLună.xlsx` cu o coloană/observație „Factura primita: da/nu" — sau raportează separat, în chat, orice plată încă neacoperită de o factură.
+4. Nu bloca restul pachetului dacă utilizatorul nu are toate facturile primite la îndemână — semnalează explicit ce lipsește în verificarea finală, nu presupune că lipsa înseamnă „nu există".
+
 ## Pas 5 — Upload pe OneDrive, prin n8n
 
 Folosește nodul OneDrive nativ dintr-un workflow n8n dedicat (configurat cu endpoint OAuth `/consumers/` pentru cont Microsoft personal — vezi `references/arhitectura-automatizare.md` pentru pașii de configurare completi dacă acel workflow nu există încă).
 
-Calea țintă pe OneDrive:
+Calea țintă pe OneDrive (verifică mereu ortografia exactă navigând efectiv folderele existente înainte de a crea altele noi — vezi nota de mai jos):
 ```
-Onlineleads/Documente societate/Facturi/<an calendaristic al lunii procesate>/NN - NumeLună/
+Online Leads/Documente Societate/Facturi/<an calendaristic al lunii procesate>/NN - NumeLună/
 ```
+
+**Atenție la ortografia exactă a folderelor existente.** La prima rulare a acestui skill, calea a fost scrisă greșit („Onlineleads/Documente societate/...", fără spațiu și cu literă mică) și a creat o structură paralelă, separată de arhiva reală de facturi a companiei (`Online Leads/Documente Societate/Facturi/`, cu spațiu și majusculă la Societate, deja existentă din 2018). OneDrive tratează numele de foldere ca fiind distincte dacă diferă chiar și printr-un spațiu sau o literă mare/mică — un „pare aceeași cale" nu e de ajuns. **Înainte să creezi orice folder pe calea de mai sus, navighează efectiv structura existentă** (folder/getChildren pornind de la rădăcină, pas cu pas) ca să confirmi ID-ul real al fiecărui nivel (`Online Leads` → `Documente Societate` → `Facturi` → `<an>`), în loc să presupui ortografia din memorie sau din acest fișier.
 
 Dacă workflow-ul de upload OneDrive nu există încă, creează-l cu un webhook similar celui de la Pasul 2 (primește un path local sau conținut binar, îl scrie pe OneDrive prin nodul nativ, răspunde cu status de succes/eșec) — sau, dacă utilizatorul preferă, apelează-l direct din Claude Code cu tool-urile MCP n8n (`execute_workflow`) dacă acestea sunt disponibile în sesiunea de Claude Code (verifică cu `claude mcp list` sau echivalent dacă serverul n8n e configurat local).
 
@@ -109,9 +122,11 @@ Dacă workflow-ul de upload OneDrive nu există încă, creează-l cu un webhook
 
 - Toate cele 3 subfoldere există și au conținut (dacă unul e gol, spune explicit de ce)
 - Numărul de extrase PDF corespunde cu conturile bancare active
+- Lista de plăți a fost afișată integral în chat, nu doar salvată în fișier
 - Lista de plăți acoperă toate extrasele (nicio bancă/cont omis)
+- Reconcilierea din Pasul 4.5: fiecare plată către un furnizor extern are (sau nu) o factură primită asociată — orice plată neacoperită e semnalată explicit, nu ignorată
 - Facturile emise acoperă intervalul complet al lunii
-- Folderul a ajuns pe OneDrive la calea corectă
+- Folderul a ajuns pe OneDrive la calea corectă (`Online Leads/Documente Societate/Facturi/<an>/NN - NumeLună/`, verificată prin navigare efectivă, nu presupusă)
 - Niciun webhook n8n folosit în acest proces a rămas activ/public inutil
 
 Raportează un rezumat scurt: câte facturi primite/emise, câte extrase, câte plăți identificate, orice element marcat „verifică manual", și dacă ai lăsat vreun webhook activ (și de ce).
