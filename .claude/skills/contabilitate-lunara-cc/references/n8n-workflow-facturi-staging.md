@@ -38,7 +38,7 @@ Un singur pas: **redirecționează (Forward) emailul cu factura, fără nicio ed
 
 Conexiuni: `Daily Check → Search Staged Invoices → Fan Out Attachments → [Upload To Staging, Mark Email Processed]` (ramificație, nu secvență — ambele pornesc din nodul Code).
 
-## Istoric — patru probleme reale găsite prin testare live, în ordine
+## Istoric — cinci probleme reale găsite prin testare live, în ordine
 
 Fiecare din cele de mai jos a fost descoperită rulând workflow-ul cu date reale, nu prin citirea documentației Gmail. Regulă generală rezultată: **nu presupune comportamentul căutării/filtrării Gmail — testează cu o execuție reală înainte să lași activ un workflow recurent.**
 
@@ -49,6 +49,8 @@ Fiecare din cele de mai jos a fost descoperită rulând workflow-ul cu date real
 3. **`to:"...@gmail.com"` singur — prindea copii nelegate ale aceluiași forward.** La un test real cu o factură reală (`facturaADS0031.pdf`, de la ADS Contab Expert), căutarea a găsit **3 mesaje** pentru un singur forward: copia reală din Inbox, o copie doar-Sent, și un **draft** rămas din compunerea emailului (toate au `to:` alias-ul în antet, inclusiv draftul). Toate trei au fost procesate și marcate, riscând suprascrierea silențioasă a unei facturi cu alta dacă ar fi avut nume de fișier identic. Fix: adăugat `in:inbox` în query, care exclude atât draft-urile cât și copiile doar-Sent.
 
 4. **`-label:"..."` (negare de label, testată atât cu numele complet cât și cu ID-ul brut `Label_50`) — nu excludea mesaje deja etichetate.** După fix-ul #3, un mesaj deja marcat „Procesat" (confirmat prin `labelIds` pe obiectul complet al mesajului) a fost totuși reprocesat, de trei ori la rând, la interval de secunde — deci nu era lag de propagare a indexului. Fix definitiv: eliminată orice negare de label din `filters.q`; verificarea „deja procesat" mutată în codul JS al nodului „Fan Out Attachments", folosind `item.json.labelIds` (mereu corect, vine din obiectul complet al mesajului, nu din indexul de căutare).
+
+5. **Fix-urile #2-#4 au fost salvate prin `update_workflow`, dar workflow-ul rulase zilnic pe versiunea VECHE, nemodificată, până a doua zi.** `update_workflow` scrie doar în **draft** — trigger-ul programat (Schedule Trigger, care rulează neatins de nimeni) execută **versiunea publicată** (`activeVersion`), nu draftul. Testarea prin `execute_workflow` (folosită pentru toate fix-urile de mai sus) rulează contra draftului curent, deci a validat corect logica — dar fără un `publish_workflow` explicit după fiecare `update_workflow`, workflow-ul continua să ruleze zilnic cu label-ul „Facturi Netriate" + convenția de subiect `[FACTURA] AAAA-LL-ZZ Nume`, deși skill-ul documenta deja convenția nouă, fără subiect special. Bug-ul a rămas nedetectat local — a fost găsit de o **sesiune Claude Code separată**, clonată prin `gh` în alt mediu, care a comparat explicit `versionId` cu `activeVersionId` din `get_workflow_details`. Aceeași clasă de eroare ca la `n8n-workflow-onedrive-fileops.md` (unde a fost prinsă și corectată în aceeași sesiune care a construit workflow-ul). **Regulă rezultată, valabilă pentru orice workflow n8n din acest skill, nu doar acesta: după orice `update_workflow`, verifică explicit `versionId === activeVersionId` (din `get_workflow_details`) înainte să consideri fix-ul „live" — un test reușit prin `execute_workflow` NU garantează că schimbarea a ajuns și la trigger-ul care rulează efectiv fără supraveghere.**
 
 ## Labels Gmail existente (context istoric)
 

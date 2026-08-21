@@ -13,6 +13,8 @@ De asta arhitectura de aici deleagă către n8n tot ce înseamnă „vorbește c
 
 Regula de fond: **n8n face pașii determiniști pe API-uri stabile, Claude Code face pașii care cer citire și decizie.**
 
+**Regulă critică pentru orice editare de workflow n8n din acest skill:** `update_workflow` scrie doar în draft — un workflow programat (Schedule Trigger) sau un webhook deja publicat continuă să ruleze pe **versiunea activă** veche până la un `publish_workflow` explicit. Testarea prin `execute_workflow` rulează contra draftului, nu contra a ceea ce chiar rulează fără supraveghere — un test reușit nu înseamnă că fix-ul e live. După orice modificare a unui workflow existent, verifică explicit `versionId === activeVersionId` din `get_workflow_details` înainte să consideri lucrul terminat. Această greșeală exactă a fost făcută și prinsă de două ori în timpul construirii acestui skill — o dată în aceeași sesiune (`OneDrive File Ops`), o dată abia de o sesiune separată, zile mai târziu, după ce workflow-ul rulase zilnic pe versiunea stricată (`Facturi Primite - Staging Sync`, vezi „Istoric" în `references/n8n-workflow-facturi-staging.md`).
+
 ## Verificare inițială — acces la n8n
 
 Înainte de orice, confirmă că poți atinge instanța n8n din acest mediu:
