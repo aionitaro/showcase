@@ -49,7 +49,7 @@ Mecanismul de citire/scriere pe OneDrive pentru acest pas (și pentru Pasul 4.5)
 
 Folosește un **subfolder de scratch separat** (nu folderul `NN - NumeLună` al lunii curente) pentru descărcările/editările temporare de `Plati.xlsx` din alte luni — ele nu au legătură cu luna pe care o procesezi acum.
 
-1. **Enumeră fișierele `Plati *.xlsx` existente**, prin navigare explicită (`getChildren`, repetat pe structura de foldere — nu folosi `file/search`, e o căutare de text pe tot drive-ul, nu una scopată pe folder, și acest skill are deja lecția că operatorii de căutare nesigni nu trebuie presupuși funcționali fără test live). Limitează la **anul curent + anul anterior** (2 ani) — convenția `Plati.xlsx` există abia din 2026-08, nimic mai vechi nu poate avea așa ceva:
+1. **Enumeră fișierele `Plati *.xlsx` existente**, prin navigare explicită (`getChildren`, repetat pe structura de foldere — nu folosi `file/search`, e o căutare de text pe tot drive-ul, nu una scopată pe folder, și acest skill are deja lecția că operatorii de căutare nesiguri nu trebuie presupuși funcționali fără test live). Limitează la **anul curent + anul anterior** (2 ani) — convenția `Plati.xlsx` există abia din 2026-08, nimic mai vechi nu poate avea așa ceva:
    ```
    Facturi/ → getChildren → (doar cei mai recenți 2 ani existenți) → getChildren fiecare → (subfoldere lună) → getChildren fiecare → caută "Plati *.xlsx"
    ```
