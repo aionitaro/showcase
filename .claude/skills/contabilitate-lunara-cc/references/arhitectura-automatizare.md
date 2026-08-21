@@ -65,6 +65,7 @@ Dezavantaje: mai multe piese de întreținut (un workflow n8n + un skill Claude)
 - **Cheie API FGO**: trebuie generată din panoul FGO (Integrări → API) și stocată ca credențial (în n8n ca și credential, sau accesibilă sesiunii Claude).
 - **OneDrive — nu prin conectorul Claude Microsoft 365.** Contul OneDrive al proiectului este un cont Microsoft **personal**, nu organizațional. Conectorul Microsoft 365 din directorul de conectori Claude e construit pentru autentificare Entra ID de tip organizațional (work/school account) și respinge conturile personale — deci acea rută e închisă pentru acest caz, indiferent de cât de mult ai vrea upload-ul automat direct din Claude. Soluția e nodul OneDrive nativ din n8n (vezi secțiunea dedicată mai jos).
 - **Workflow n8n existent**: există deja un workflow parțial pentru automatizarea extraselor Salt Bank (Gmail → ZIP → PDF → OneDrive) — de extins cu partea FGO API în loc de reconstruit de la zero.
+- **Actualizare**: mecanismul canonic pentru toate atingerile OneDrive din skill (listare, descărcare, upload, mutare, redenumire — Pas 1.5/4.5/5) e acum workflow-ul `OneDrive File Ops (on-demand)`, documentat în `n8n-workflow-onedrive-fileops.md` — nu mai construi workflow-uri OneDrive separate pentru pași noi ai skill-ului.
 
 ## OneDrive personal prin n8n — configurare
 
